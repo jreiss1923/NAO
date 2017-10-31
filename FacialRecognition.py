@@ -8,7 +8,7 @@
 #     called "FaceDetected"
 
 # - We then read this ALMemory value and check whether we get
-#   interesting things.
+#   interesting things
 
 import time
 
