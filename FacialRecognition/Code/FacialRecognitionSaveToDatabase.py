@@ -15,7 +15,7 @@ except Exception, e:
     print str(e)
     exit(1)
 
-faceProxy.clearDatabase() # COMMENT THIS OUT AFTER YOU'VE DONE IT ONCE
+#faceProxy.clearDatabase() # COMMENT THIS OUT AFTER YOU'VE DONE IT ONCE
 
 time.sleep(10)
 
