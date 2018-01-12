@@ -45,3 +45,7 @@ FacialRecognition/.pydevproject
 *.v1_sys_astdelta
 *.launch
 .metadata/.plugins/org.eclipse.epp.logging.aeri.ide/org.eclipse.epp.logging.aeri.ide.server/remote-history/segments_5
+FacialRecognition/Code/Gui.py
+FacialRecognition/Code/DialogFlow.py
+.metadata/.plugins/org.eclipse.epp.logging.aeri.ide/org.eclipse.epp.logging.aeri.ide.server/remote-history/segments_8
+*.zip

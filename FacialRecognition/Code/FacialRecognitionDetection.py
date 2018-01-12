@@ -12,7 +12,19 @@ from naoqi import ALModule
 
 from optparse import OptionParser
 
-NAO_IP = "10.11.25.212"
+import os.path
+
+try:
+    import apiai
+except ImportError:
+    sys.path.append(
+        os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)
+    )
+    import apiai
+
+CLIENT_ACCESS_TOKEN = '1801b5eb14204841bc316201153a8bf7'
+
+NAO_IP = "10.11.26.173"
 
 
 # Global variable to store the HumanGreeter module instance
@@ -40,7 +52,7 @@ class HumanGreeterModule(ALModule):
         memory.subscribeToEvent("FaceDetected",
             "HumanGreeter",
             "onFaceDetected")
-
+        
     def onFaceDetected(self, eventName, value, subscriberIdentifier):
         """ This will be called each time a face is
         detected.
@@ -60,12 +72,65 @@ class HumanGreeterModule(ALModule):
             extraInfo = faceInfo[1]
             faceLabel =  extraInfo[2]
             if(faceLabel != ""):
-                self.tts.say("Hello, " + faceLabel)
+                
                 print(faceLabel)
+                good = raw_input("I detected that " + faceLabel + " is there. Am I right? [y/n]")
+                self.tts.say("I detected that " + faceLabel + " is there. Am I right? [y/n]")
+                
+                if(good == "y"):
+                    memory.unsubscribeToEvent("FaceDetected", "HumanGreeter", "onFaceDetected")
+                    self.conversation(faceLabel)
+                else:
+                    good = raw_input("Would you like me to try to detect you again? You can manually input your name otherwise. [y/n]")
+                    self.tts.say("Would you like me to try to detect you again? You can manually input your name otherwise. [y/n]")
+                    
+                    if(good != "y"):
+                        name = raw_input("Enter your name")
+                        self.tts.say("Enter your name")
+                        
+                        memory.unsubscribeToEvent("FaceDetected", "HumanGreeter", "onFaceDetected")
+                        self.conversation(name)
+                
+                
         except IndexError:
             print("Index error")
         
         isTalking = False
+        
+    def conversation(self, name):
+        """
+        if faceLabel in tokenlist.keys() : 
+            CLIENT_ACCESS_TOKEN = tokenlist[faceLabel]
+        else:
+            print("Name does not have a conversation set associated with it")
+            return
+        """
+        ai = apiai.ApiAI(CLIENT_ACCESS_TOKEN)
+    
+        while(True):
+            request = ai.text_request()
+    
+            request.lang = 'en'  # optional, default value equal 'en'
+        
+            #request.session_id = "<SESSION ID, UNIQUE FOR EACH USER>"
+    
+            request.query = raw_input()
+            #print(request.query)
+        
+            response = request.getresponse()
+            
+            answer = response.read()
+            start_index = answer.find( '"speech": ' )
+            start_index += 11
+            end_index = answer.find( '"', start_index )
+            
+            substring = answer[start_index:end_index]
+            
+            #print(start_index)
+            #print(end_index)
+            
+            print(">" + substring)
+
 
 
 
