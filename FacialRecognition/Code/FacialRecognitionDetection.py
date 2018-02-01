@@ -12,6 +12,8 @@ from naoqi import ALModule
 
 from optparse import OptionParser
 
+from Tkinter import *
+
 import os.path
 
 try:
@@ -31,7 +33,15 @@ NAO_IP = "10.11.26.173"
 HumanGreeter = None
 memory = None
 isTalking = False
+isReady = False
+answer = "n"
 
+def check_name():
+    global answer
+    global isReady
+    
+    answer = e.get()
+    isReady = True
 
 class HumanGreeterModule(ALModule):
     """ A simple module able to react
@@ -74,22 +84,43 @@ class HumanGreeterModule(ALModule):
             if(faceLabel != ""):
                 
                 print(faceLabel)
-                good = raw_input("I detected that " + faceLabel + " is there. Am I right? [y/n]")
-                self.tts.say("I detected that " + faceLabel + " is there. Am I right? [y/n]")
                 
-                if(good == "y"):
-                    memory.unsubscribeToEvent("FaceDetected", "HumanGreeter", "onFaceDetected")
+                w['text'] = "I detected that" + faceLabel + " is there. Am I right? [y/n]"
+                b['command'] = check_name
+                
+                self.tts.say("I detected that " + faceLabel + " is there. Am I right?")
+                
+                global answer
+                global isReady
+                
+                while not isReady:
+                    time.sleep(0.1)
+                    
+                isReady = False
+                
+                if(answer.toLower() == "y"):
+                    memory.unsubscribeToEvent("FaceDetected", "HumanGreeter")
                     self.conversation(faceLabel)
                 else:
-                    good = raw_input("Would you like me to try to detect you again? You can manually input your name otherwise. [y/n]")
-                    self.tts.say("Would you like me to try to detect you again? You can manually input your name otherwise. [y/n]")
+                    w['text'] = "Would you like me to try to detect you again? You can manually input your name otherwise. [y/n]"
+                    self.tts.say("Would you like me to try to detect you again? You can manually input your name otherwise.")
                     
-                    if(good != "y"):
-                        name = raw_input("Enter your name")
+                    while not isReady:
+                        time.sleep(0.1)
+                         
+                    isReady = False
+                                        
+                    if(answer.toLower() != "y"):
+                        w['text'] = "Enter your name"
                         self.tts.say("Enter your name")
                         
-                        memory.unsubscribeToEvent("FaceDetected", "HumanGreeter", "onFaceDetected")
-                        self.conversation(name)
+                        while not isReady:
+                            time.sleep(0.1)
+                         
+                        isReady = False
+                        
+                        memory.unsubscribeToEvent("FaceDetected", "HumanGreeter")
+                        self.conversation(answer)
                 
                 
         except IndexError:
@@ -105,16 +136,27 @@ class HumanGreeterModule(ALModule):
             print("Name does not have a conversation set associated with it")
             return
         """
+        
+        global isReady
+        
+        w['text'] = "Hello!"
+        self.tts.say("Hello!")
+        
         ai = apiai.ApiAI(CLIENT_ACCESS_TOKEN)
-    
+        
         while(True):
             request = ai.text_request()
     
             request.lang = 'en'  # optional, default value equal 'en'
         
             #request.session_id = "<SESSION ID, UNIQUE FOR EACH USER>"
+            
+            while not isReady:
+                time.sleep(0.1)
     
-            request.query = raw_input()
+            isReady = False
+    
+            request.query = answer
             #print(request.query)
         
             response = request.getresponse()
@@ -129,15 +171,19 @@ class HumanGreeterModule(ALModule):
             #print(start_index)
             #print(end_index)
             
+            w['text'] = substring
+            self.tts.say(substring)
             print(">" + substring)
 
 
 
 
-def main():
+def ip_connect():
     """ Main entry point
 
     """
+    NAO_IP = e.get()
+    
     parser = OptionParser()
     parser.add_option("--pip",
         help="Parent broker port. The IP address or your robot",
@@ -170,16 +216,17 @@ def main():
     global HumanGreeter
     HumanGreeter = HumanGreeterModule("HumanGreeter")
 
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        print
-        print "Interrupted by user, shutting down"
-        myBroker.shutdown()
-        sys.exit(0)
 
+root = Tk()
 
+w = Label(root, text = "Enter your robot's IP")
+w.pack()
 
-if __name__ == "__main__":
-    main()
+e = Entry(root)
+e.pack()
+e.focus_set()
+
+b = Button(root,text='Next',command=ip_connect)
+b.pack(side='bottom')
+
+root.mainloop()
