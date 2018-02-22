@@ -1,7 +1,4 @@
 # -*- encoding: UTF-8 -*-
-""" Say 'hello, you' each time a human face is detected
-
-"""
 
 import sys
 import time
@@ -16,13 +13,9 @@ from Tkinter import *
 
 import os.path
 
-try:
-    import apiai
-except ImportError:
-    sys.path.append(
-        os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)
-    )
-    import apiai
+import apiai
+
+#168.229.109.34
 
 CLIENT_ACCESS_TOKEN = '1801b5eb14204841bc316201153a8bf7'
 
@@ -41,6 +34,7 @@ def check_name():
     global isReady
     
     answer = e.get()
+    e.delete(0, 'end')
     isReady = True
 
 class HumanGreeterModule(ALModule):
@@ -85,7 +79,7 @@ class HumanGreeterModule(ALModule):
                 
                 print(faceLabel)
                 
-                w['text'] = "I detected that" + faceLabel + " is there. Am I right? [y/n]"
+                w['text'] = "I detected that " + faceLabel + " is there. Am I right? [y/n]"
                 b['command'] = check_name
                 
                 self.tts.say("I detected that " + faceLabel + " is there. Am I right?")
@@ -94,11 +88,11 @@ class HumanGreeterModule(ALModule):
                 global isReady
                 
                 while not isReady:
-                    time.sleep(0.1)
+                    time.sleep(0.05)
                     
                 isReady = False
                 
-                if(answer.toLower() == "y"):
+                if(answer.lower() == "y"):
                     memory.unsubscribeToEvent("FaceDetected", "HumanGreeter")
                     self.conversation(faceLabel)
                 else:
@@ -106,16 +100,16 @@ class HumanGreeterModule(ALModule):
                     self.tts.say("Would you like me to try to detect you again? You can manually input your name otherwise.")
                     
                     while not isReady:
-                        time.sleep(0.1)
+                        time.sleep(0.05)
                          
                     isReady = False
                                         
-                    if(answer.toLower() != "y"):
+                    if(answer.lower() != "y"):
                         w['text'] = "Enter your name"
                         self.tts.say("Enter your name")
                         
                         while not isReady:
-                            time.sleep(0.1)
+                            time.sleep(0.05)
                          
                         isReady = False
                         
@@ -152,7 +146,7 @@ class HumanGreeterModule(ALModule):
             #request.session_id = "<SESSION ID, UNIQUE FOR EACH USER>"
             
             while not isReady:
-                time.sleep(0.1)
+                time.sleep(0.05)
     
             isReady = False
     
@@ -161,12 +155,12 @@ class HumanGreeterModule(ALModule):
         
             response = request.getresponse()
             
-            answer = response.read()
-            start_index = answer.find( '"speech": ' )
+            reply = response.read()
+            start_index = reply.find( '"speech": ' )
             start_index += 11
-            end_index = answer.find( '"', start_index )
+            end_index = reply.find( '"', start_index )
             
-            substring = answer[start_index:end_index]
+            substring = reply[start_index:end_index]
             
             #print(start_index)
             #print(end_index)
@@ -183,7 +177,7 @@ def ip_connect():
 
     """
     NAO_IP = e.get()
-    
+    e.delete(0, 'end')
     parser = OptionParser()
     parser.add_option("--pip",
         help="Parent broker port. The IP address or your robot",
