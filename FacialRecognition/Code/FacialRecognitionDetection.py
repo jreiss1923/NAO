@@ -11,8 +11,6 @@ from optparse import OptionParser
 
 from Tkinter import *
 
-import os.path
-
 import apiai
 
 #168.229.109.34
@@ -28,6 +26,9 @@ memory = None
 isTalking = False
 isReady = False
 answer = "n"
+numTimes = 0
+
+student_access_codes = {}
 
 def check_name():
     global answer
@@ -63,6 +64,7 @@ class HumanGreeterModule(ALModule):
 
         """
         global isTalking
+        global numTimes
         if(isTalking):
             return
         
@@ -115,21 +117,45 @@ class HumanGreeterModule(ALModule):
                         
                         memory.unsubscribeToEvent("FaceDetected", "HumanGreeter")
                         self.conversation(answer)
+            elif numTimes >= 10:
+                w['text'] = "Would you like me to try to detect you again? You can manually input your name otherwise. [y/n]"
+                self.tts.say("I haven't been able to detect a specific person. Would you like me to try to detect you again? You can manually input your name otherwise.")
                 
+                numTimes = 0
                 
+                while not isReady:
+                    time.sleep(0.05)
+                     
+                isReady = False
+                                    
+                if(answer.lower() != "y"):
+                    w['text'] = "Enter your name"
+                    self.tts.say("Enter your name")
+                    
+                    while not isReady:
+                        time.sleep(0.05)
+                     
+                    isReady = False
+                    
+                    memory.unsubscribeToEvent("FaceDetected", "HumanGreeter")
+                    self.conversation(answer)
+            else:
+                numTimes += 1
+                
+                   
         except IndexError:
             print("Index error")
         
         isTalking = False
         
     def conversation(self, name):
-        """
-        if faceLabel in tokenlist.keys() : 
-            CLIENT_ACCESS_TOKEN = tokenlist[faceLabel]
+        name = name.lower()
+        if name in list(student_access_codes.keys()) : 
+            CLIENT_ACCESS_TOKEN = student_access_codes[name]
         else:
-            print("Name does not have a conversation set associated with it")
+            w['text'] = "This name doesn't have an access token associated with it. Please check the access token file and restart the program"
+            self.tts.say("This name doesn't have an access token associated with it. Please check the access token file and restart the program!")
             return
-        """
         
         global isReady
         
@@ -210,6 +236,12 @@ def ip_connect():
     global HumanGreeter
     HumanGreeter = HumanGreeterModule("HumanGreeter")
 
+
+accessCodeFile = open("student_access_codes.txt", "r")
+associations = accessCodeFile.readlines()
+for line in associations:
+    student,code = line.split(" ")  
+    student_access_codes[student] = code
 
 root = Tk()
 
