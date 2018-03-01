@@ -140,6 +140,7 @@ class HumanGreeterModule(ALModule):
                     memory.unsubscribeToEvent("FaceDetected", "HumanGreeter")
                     self.conversation(answer)
             else:
+                w['text'] = "Looking for faces"
                 numTimes += 1
                 
                    
@@ -202,6 +203,7 @@ def ip_connect():
     """ Main entry point
 
     """
+    w['text'] = "Connecting..."
     NAO_IP = e.get()
     e.delete(0, 'end')
     parser = OptionParser()
@@ -229,7 +231,7 @@ def ip_connect():
        pip,         # parent broker IP
        pport)       # parent broker port
 
-
+    w['text'] = "Looking for faces"
     # Warning: HumanGreeter must be a global variable
     # The name given to the constructor must be the name of the
     # variable
@@ -242,6 +244,8 @@ associations = accessCodeFile.readlines()
 for line in associations:
     student,code = line.split(" ")  
     student_access_codes[student] = code
+    print student
+    print code
 
 root = Tk()
 
