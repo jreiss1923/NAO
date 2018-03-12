@@ -1,23 +1,24 @@
 # -*- encoding: UTF-8 -*- 
 
-import time
-
 from naoqi import ALProxy
 
 from Tkinter import *
 
-IP = '10.31.85.117'
-PORT = 9559
-faceProxy = -1;
+IP = '10.31.85.117' # default value, not important
+PORT = 9559 # default port for the NAO robot, don't change unless you know what you're doing
+faceProxy = -1 # default value, not important
 
 def ip_connect():
-    global e
-    global w
+    # tkinter display elements
+    global text_entry_field 
+    global display_text
+    
+    # setting scope for these vars to global
     global IP
     global faceProxy
-    IP = e.get()
+    IP = text_entry_field.get()
     
-    print IP
+    #print IP
     
     # Create a proxy to ALFaceDetection
     try:
@@ -25,59 +26,58 @@ def ip_connect():
     except Exception, ex:
         print "Error when creating face detection proxy:"
         print str(ex)
-         #exit(1)
-    #faceProxy.clearDatabase() 
-    e.delete(0, END)
-    w['text'] = "Look directly at the robot and enter your name"
-    b['command'] = learn_face
+        #exit(1)
+    #faceProxy.clearDatabase() use this if you need to start clean on a new robot
+    text_entry_field.delete(0, END) # clears the entry field
+    display_text['text'] = "Look directly at the robot and enter your name"
+    button['command'] = learn_face # sets the user up to proceed to the next phase (the face learning)
         
 def learn_face():
-    global e
-    global w
-    global b
+    # tkinter display elements
+    global text_entry_field
+    global display_text
+    global button
+    
+    # setting scope for these vars to global
     global faceProxy
-    name = e.get()
     
-    print name
+    # gets name based on user input
+    name = text_entry_field.get()
     
-    b.pack_forget()
+    # print name use this to debug whether the name was picked up correctly
     
+    # delete button
+    button.pack_forget()
     
-    
-    w['text'] = "Detecting face"
-    
+    # start face learning and notify user of its success
+    display_text['text'] = "Detecting face"
     faceRecognized = faceProxy.learnFace(name)
-
     if(faceRecognized):
         print "Face saved"
-        w['text'] = "Face saved"
+        display_text['text'] = "Face saved"
     else:
-        w['text'] = "Face not saved, please try again"
+        display_text['text'] = "Face not saved, please try again"
         #exit(1)
-        
+    
+    # use this to see which faces have saved successfully
+    """
     learnedFaces = faceProxy.getLearnedFacesList()
-
     for face in learnedFaces:
         print face
-        
-    #root.quit()
-    
+    """
+# initialize tkinter    
 root = Tk()
 
-w = Label(root, text = "Enter your robot's IP")
-w.pack()
+#initializes tkinter display elements
+display_text = Label(root, text = "Enter your robot's IP")
+display_text.pack()
 
-e = Entry(root)
-e.pack()
-e.focus_set()
+text_entry_field = Entry(root)
+text_entry_field.pack()
+text_entry_field.focus_set()
 
-b = Button(root,text='Next',command=ip_connect)
-b.pack(side='bottom')
+button = Button(root,text='Next',command=ip_connect)
+button.pack(side='bottom')
 
+#starts the gui
 root.mainloop()
-
-
-#faceProxy.clearDatabase() # COMMENT THIS OUT AFTER YOU'VE DONE IT ONCE
-
-#faceProxy.setRecognitionEnabled(False)
-#faceProxy.setTrackingEnabled(False)
