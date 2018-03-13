@@ -4,7 +4,7 @@ from naoqi import ALProxy
 
 from Tkinter import *
 
-IP = '10.31.85.117' # default value, not important
+IP = '' # default value, not important
 PORT = 9559 # default port for the NAO robot, don't change unless you know what you're doing
 faceProxy = -1 # default value, not important
 
@@ -53,7 +53,7 @@ def learn_face():
     display_text['text'] = "Detecting face"
     faceRecognized = faceProxy.learnFace(name)
     if(faceRecognized):
-        print "Face saved"
+        #print "Face saved"
         display_text['text'] = "Face saved"
     else:
         display_text['text'] = "Face not saved, please try again"
@@ -65,7 +65,7 @@ def learn_face():
     for face in learnedFaces:
         print face
     """
-# initialize tkinter    
+# initializes tkinter    
 root = Tk()
 
 #initializes tkinter display elements

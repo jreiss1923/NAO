@@ -1,6 +1,5 @@
 # -*- encoding: UTF-8 -*-
 
-import sys
 import time
 
 from naoqi import ALProxy
@@ -13,35 +12,32 @@ from Tkinter import *
 
 import apiai
 
-#168.229.109.34
+# default values, not important
+CLIENT_ACCESS_TOKEN = ''
+NAO_IP = ''
+PORT = 9559 # default port for the NAO robot, don't change unless you know what you're doing
 
-CLIENT_ACCESS_TOKEN = '1801b5eb14204841bc316201153a8bf7'
+# global vars
+HumanGreeter = None # the face detection module, needed to facilitate the face detected event
+memory = None # the NAO memory unit, used to subscribe to events
+inFaceDetected = False # whether or not the NAO is currently in the face detected event
+enteredNewResponse = False # used to determine whether the user has entered a new response yet
+userResponse = "n" # used to track user responses
+numTimes = 0 # used to determine how many times a face is detected display_text/o a specific name (if this happens too much, a failsafe will be triggered)
+student_access_codes = {} # a dictionary that will store the DialogFlow access codes for each student
 
-NAO_IP = "10.11.26.173"
-
-
-# Global variable to store the HumanGreeter module instance
-HumanGreeter = None
-memory = None
-isTalking = False
-isReady = False
-answer = "n"
-numTimes = 0
-
-student_access_codes = {}
-
+# this function is used to get new user input
 def check_name():
-    global answer
-    global isReady
+    global userResponse
+    global enteredNewResponse
     
-    answer = e.get()
-    e.delete(0, 'end')
-    isReady = True
+    userResponse = text_entry_field.get()
+    text_entry_field.delete(0, 'end')
+    enteredNewResponse = True
 
 class HumanGreeterModule(ALModule):
     """ A simple module able to react
-    to facedetection events
-
+    to face detection events
     """
     def __init__(self, name):
         ALModule.__init__(self, name)
@@ -63,104 +59,117 @@ class HumanGreeterModule(ALModule):
         detected.
 
         """
-        global isTalking
+        global inFaceDetected
         global numTimes
-        if(isTalking):
-            return
         
-        isTalking = True
-
-        print("found a face")
+        # we don't want this function to be called multiple times at once
+        if(inFaceDetected):
+            return
+        inFaceDetected = True
         
         try:
+            """ this part looks a little rough, but is based on the NAOqi API's description of these 
+            face data arrays. The "face label" is the person's name. Visit here if you need clarification:
+            http://doc.aldebaran.com/2-1/naoqi/peopleperception/alfacedetection.html#alfacedetection
+            """
             infos = value[1]
             faceInfo = infos[0]
             extraInfo = faceInfo[1]
             faceLabel =  extraInfo[2]
+            
+            """ if a named face is detected, then check whether it is the correct name. If it is, continue
+            to the dialogue portion of the program. Otherwise, either try to detect the correct face or prompt
+            the user to enter their name manually, based on their preference
+            """
             if(faceLabel != ""):
                 
-                print(faceLabel)
+                #print(faceLabel)
                 
-                w['text'] = "I detected that " + faceLabel + " is there. Am I right? [y/n]"
-                b['command'] = check_name
+                display_text['text'] = "I detected that " + faceLabel + " is there. Am I right? [y/n]"
+                button['command'] = check_name
                 
                 self.tts.say("I detected that " + faceLabel + " is there. Am I right?")
                 
-                global answer
-                global isReady
+                global userResponse
+                global enteredNewResponse
                 
-                while not isReady:
+                while not enteredNewResponse:
                     time.sleep(0.05)
                     
-                isReady = False
+                enteredNewResponse = False
                 
-                if(answer.lower() == "y"):
+                if(userResponse.lower() == "y"):
                     memory.unsubscribeToEvent("FaceDetected", "HumanGreeter")
                     self.conversation(faceLabel)
                 else:
-                    w['text'] = "Would you like me to try to detect you again? You can manually input your name otherwise. [y/n]"
+                    display_text['text'] = "Would you like me to try to detect you again? You can manually input your name otherwise. [y/n]"
                     self.tts.say("Would you like me to try to detect you again? You can manually input your name otherwise.")
                     
-                    while not isReady:
+                    while not enteredNewResponse:
                         time.sleep(0.05)
                          
-                    isReady = False
+                    enteredNewResponse = False
                                         
-                    if(answer.lower() != "y"):
-                        w['text'] = "Enter your name"
+                    if(userResponse.lower() != "y"):
+                        display_text['text'] = "Enter your name"
                         self.tts.say("Enter your name")
                         
-                        while not isReady:
+                        while not enteredNewResponse:
                             time.sleep(0.05)
                          
-                        isReady = False
+                        enteredNewResponse = False
                         
                         memory.unsubscribeToEvent("FaceDetected", "HumanGreeter")
-                        self.conversation(answer)
+                        self.conversation(userResponse)
+            # if an unnamed face is detected 10 times in a row, the option will be presented to the user to 
+            # either manually input their name or have the robot continue to try to detect them 
             elif numTimes >= 10:
-                w['text'] = "Would you like me to try to detect you again? You can manually input your name otherwise. [y/n]"
+                display_text['text'] = "Would you like me to try to detect you again? You can manually input your name otherwise. [y/n]"
                 self.tts.say("I haven't been able to detect a specific person. Would you like me to try to detect you again? You can manually input your name otherwise.")
                 
                 numTimes = 0
                 
-                while not isReady:
+                while not enteredNewResponse:
                     time.sleep(0.05)
                      
-                isReady = False
+                enteredNewResponse = False
                                     
-                if(answer.lower() != "y"):
-                    w['text'] = "Enter your name"
+                if(userResponse.lower() != "y"):
+                    display_text['text'] = "Enter your name"
                     self.tts.say("Enter your name")
                     
-                    while not isReady:
+                    while not enteredNewResponse:
                         time.sleep(0.05)
                      
-                    isReady = False
+                    enteredNewResponse = False
                     
                     memory.unsubscribeToEvent("FaceDetected", "HumanGreeter")
-                    self.conversation(answer)
+                    self.conversation(userResponse)
             else:
-                w['text'] = "Looking for faces"
+                display_text['text'] = "Looking for faces"
                 numTimes += 1
                 
                    
         except IndexError:
             print("Index error")
         
-        isTalking = False
+        inFaceDetected = False
         
+    """ starts a conversation based on the student's DialogFlow conversation set. If none exists, the program will
+    end and prompt the user to check the access token file
+    """
     def conversation(self, name):
         name = name.lower()
         if name in list(student_access_codes.keys()) : 
             CLIENT_ACCESS_TOKEN = student_access_codes[name]
         else:
-            w['text'] = "This name doesn't have an access token associated with it. Please check the access token file and restart the program"
+            display_text['text'] = "This name doesn't have an access token associated with it. Please check the access token file and restart the program"
             self.tts.say("This name doesn't have an access token associated with it. Please check the access token file and restart the program!")
             return
         
-        global isReady
+        global enteredNewResponse
         
-        w['text'] = "Hello!"
+        display_text['text'] = "Hello!"
         self.tts.say("Hello!")
         
         ai = apiai.ApiAI(CLIENT_ACCESS_TOKEN)
@@ -172,12 +181,12 @@ class HumanGreeterModule(ALModule):
         
             #request.session_id = "<SESSION ID, UNIQUE FOR EACH USER>"
             
-            while not isReady:
+            while not enteredNewResponse:
                 time.sleep(0.05)
     
-            isReady = False
+            enteredNewResponse = False
     
-            request.query = answer
+            request.query = userResponse
             #print(request.query)
         
             response = request.getresponse()
@@ -192,71 +201,61 @@ class HumanGreeterModule(ALModule):
             #print(start_index)
             #print(end_index)
             
-            w['text'] = substring
+            display_text['text'] = substring
             self.tts.say(substring)
             print(">" + substring)
 
 
 
-
+# function to connect to the NAO robot and start the HumanGreeter Module (this will manage the face detection)
 def ip_connect():
-    """ Main entry point
-
-    """
-    w['text'] = "Connecting..."
-    NAO_IP = e.get()
-    e.delete(0, 'end')
-    parser = OptionParser()
-    parser.add_option("--pip",
-        help="Parent broker port. The IP address or your robot",
-        dest="pip")
-    parser.add_option("--pport",
-        help="Parent broker port. The port NAOqi is listening to",
-        dest="pport",
-        type="int")
-    parser.set_defaults(
-        pip=NAO_IP,
-        pport=9559)
-
-    (opts, args_) = parser.parse_args()
-    pip   = opts.pip
-    pport = opts.pport
-
+    display_text['text'] = "Connecting..."
+    NAO_IP = text_entry_field.get()
+    text_entry_field.delete(0, 'end')
     # We need this broker to be able to construct
     # NAOqi modules and subscribe to other modules
     # The broker must stay alive until the program exists
     myBroker = ALBroker("myBroker",
        "0.0.0.0",   # listen to anyone
        0,           # find a free port and use it
-       pip,         # parent broker IP
-       pport)       # parent broker port
+       NAO_IP,         # parent broker IP
+       PORT)       # parent broker port
 
-    w['text'] = "Looking for faces"
+    display_text['text'] = "Looking for faces"
     # Warning: HumanGreeter must be a global variable
     # The name given to the constructor must be the name of the
     # variable
     global HumanGreeter
     HumanGreeter = HumanGreeterModule("HumanGreeter")
-
-
+    
+"""
+gets the access codes for the students from a local text file, format:
+student1 accesscode1
+student2 accesscode2
+"""
 accessCodeFile = open("student_access_codes.txt", "r")
 associations = accessCodeFile.readlines()
+
+""" use this code to test if your text file is reading correctly
 for line in associations:
     student,code = line.split(" ")  
     student_access_codes[student] = code
     print student
     print code
-
+"""
+# initializes tkinter
 root = Tk()
 
-w = Label(root, text = "Enter your robot's IP")
-w.pack()
+# initializes tkinter elements
+display_text = Label(root, text = "Enter your robot's IP")
+display_text.pack()
 
-e = Entry(root)
-e.pack()
-e.focus_set()
+text_entry_field = Entry(root)
+text_entry_field.pack()
+text_entry_field.focus_set()
 
-b = Button(root,text='Next',command=ip_connect)
-b.pack(side='bottom')
+button = Button(root,text='Next',command=ip_connect)
+button.pack(side='bottom')
 
+# starts the gui
 root.mainloop()
