@@ -4,9 +4,10 @@ from naoqi import ALProxy
 
 from Tkinter import *
 
-IP = '' # default value, not important
+# default values, not important
+IP = '' 
+faceProxy = -1
 PORT = 9559 # default port for the NAO robot, don't change unless you know what you're doing
-faceProxy = -1 # default value, not important
 
 def ip_connect():
     # tkinter display elements

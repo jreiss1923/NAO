@@ -34,11 +34,8 @@ def check_name():
     userResponse = text_entry_field.get()
     text_entry_field.delete(0, 'end')
     enteredNewResponse = True
-
+# A simple module able to react to face detection events
 class HumanGreeterModule(ALModule):
-    """ A simple module able to react
-    to face detection events
-    """
     def __init__(self, name):
         ALModule.__init__(self, name)
         # No need for IP and port here because
@@ -54,11 +51,8 @@ class HumanGreeterModule(ALModule):
             "HumanGreeter",
             "onFaceDetected")
         
+    # This will be called each time a face is detected.
     def onFaceDetected(self, eventName, value, subscriberIdentifier):
-        """ This will be called each time a face is
-        detected.
-
-        """
         global inFaceDetected
         global numTimes
         
