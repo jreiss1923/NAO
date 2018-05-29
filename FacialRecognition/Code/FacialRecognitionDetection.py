@@ -179,7 +179,7 @@ class HumanGreeterModule(ALModule):
                 time.sleep(0.05)
     
             enteredNewResponse = False
-    
+            
             request.query = userResponse
             #print(request.query)
         
@@ -194,7 +194,7 @@ class HumanGreeterModule(ALModule):
             
             #print(start_index)
             #print(end_index)
-            
+            time.sleep(0.5) # a delay to prevent the robot from seeming too abrupt by answering immediately
             display_text['text'] = substring
             self.tts.say(substring)
             print(">" + substring)
@@ -230,13 +230,13 @@ student2 accesscode2
 accessCodeFile = open("student_access_codes.txt", "r")
 associations = accessCodeFile.readlines()
 
-""" use this code to test if your text file is reading correctly
+#""" use this code to test if your text file is reading correctly
 for line in associations:
     student,code = line.split(" ")  
     student_access_codes[student] = code
     print student
     print code
-"""
+#"""
 # initializes tkinter
 root = Tk()
 
